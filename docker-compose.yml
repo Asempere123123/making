@@ -1,0 +1,16 @@
+services:
+  backend:
+    build: ./backend
+    container_name: api_clase
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend:/app
+
+  frontend:
+    build: ./frontend
+    container_name: frontend_clase
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
