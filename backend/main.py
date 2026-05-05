@@ -1,4 +1,5 @@
 import sqlite3
+from datetime import datetime
 from typing import Literal, Optional
 
 from fastapi import FastAPI
@@ -28,6 +29,13 @@ def init_db():
             total_vehiculos INTEGER DEFAULT 0,
             total_ligeros INTEGER DEFAULT 0,
             total_pesados INTEGER DEFAULT 0,
+            lunes INTEGER DEFAULT 0,
+            martes INTEGER DEFAULT 0,
+            miercoles INTEGER DEFAULT 0,
+            jueves INTEGER DEFAULT 0,
+            viernes INTEGER DEFAULT 0,
+            sabado INTEGER DEFAULT 0,
+            domingo INTEGER DEFAULT 0,
             dato1 REAL DEFAULT 0.0,
             dato2 REAL DEFAULT 0.0,
             dato3 REAL DEFAULT 0.0,
@@ -101,14 +109,26 @@ def set_vehiculo(req: VehiculoReq):
         "UPDATE app_data SET vehiculo_actual = ? WHERE id=1", (req.vehiculo,)
     )
 
+    # Determine day of the week (0 = Monday, 6 = Sunday)
+    dias = ["lunes", "martes", "miercoles", "jueves", "viernes", "sabado", "domingo"]
+    dia_actual = dias[datetime.now().weekday()]
+
     if req.vehiculo == "ligero":
-        cursor.execute(
-            "UPDATE app_data SET total_vehiculos = total_vehiculos + 1, total_ligeros = total_ligeros + 1 WHERE id=1"
-        )
+        cursor.execute(f"""
+            UPDATE app_data
+            SET total_vehiculos = total_vehiculos + 1,
+                total_ligeros = total_ligeros + 1,
+                {dia_actual} = {dia_actual} + 1
+            WHERE id=1
+        """)
     elif req.vehiculo == "pesado":
-        cursor.execute(
-            "UPDATE app_data SET total_vehiculos = total_vehiculos + 1, total_pesados = total_pesados + 1 WHERE id=1"
-        )
+        cursor.execute(f"""
+            UPDATE app_data
+            SET total_vehiculos = total_vehiculos + 1,
+                total_pesados = total_pesados + 1,
+                {dia_actual} = {dia_actual} + 1
+            WHERE id=1
+        """)
 
     conn.commit()
     conn.close()
@@ -123,6 +143,16 @@ def get_analiticas():
     conn = get_db()
     row = conn.execute(
         "SELECT total_vehiculos, total_ligeros, total_pesados FROM app_data WHERE id=1"
+    ).fetchone()
+    conn.close()
+    return dict(row)
+
+
+@app.get("/semana")
+def get_semana():
+    conn = get_db()
+    row = conn.execute(
+        "SELECT lunes, martes, miercoles, jueves, viernes, sabado, domingo FROM app_data WHERE id=1"
     ).fetchone()
     conn.close()
     return dict(row)

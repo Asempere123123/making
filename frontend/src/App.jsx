@@ -179,12 +179,26 @@ function HistoryPage() {
     total_pesados: 0,
   });
 
+  const [semana, setSemana] = useState({
+    lunes: 0,
+    martes: 0,
+    miercoles: 0,
+    jueves: 0,
+    viernes: 0,
+    sabado: 0,
+    domingo: 0,
+  });
+
   useEffect(() => {
     const fetchAnaliticas = async () => {
       try {
         const res = await fetch(`${API_URL}/analiticas`);
         const data = await res.json();
         setStats(data);
+
+        const resSemana = await fetch(`${API_URL}/semana`);
+        const dataSemana = await resSemana.json();
+        setSemana(dataSemana);
       } catch (error) {
         console.error("Error trayendo analíticas:", error);
       }
@@ -200,6 +214,18 @@ function HistoryPage() {
     stats.total_vehiculos > 0
       ? Math.round((stats.total_pesados / stats.total_vehiculos) * 100)
       : 0;
+
+  // Find max value to calculate plot heights, ensure it's at least 1 to avoid / 0
+  const maxDayCount = Math.max(...Object.values(semana), 1);
+  const diasGrafico = [
+    { key: "lunes", label: "L" },
+    { key: "martes", label: "M" },
+    { key: "miercoles", label: "X" },
+    { key: "jueves", label: "J" },
+    { key: "viernes", label: "V" },
+    { key: "sabado", label: "S" },
+    { key: "domingo", label: "D" },
+  ];
 
   return (
     <div className="p-4 space-y-4 animate-in fade-in duration-300">
@@ -249,6 +275,37 @@ function HistoryPage() {
               ></div>
             </div>
           </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
+        <h3 className="text-xs font-bold text-gray-400 uppercase mb-4">
+          Actividad Semanal
+        </h3>
+
+        <div className="flex justify-between items-end gap-2 h-32 mt-2">
+          {diasGrafico.map((dia) => {
+            const heightPercentage = (semana[dia.key] / maxDayCount) * 100;
+            return (
+              <div
+                key={dia.key}
+                className="flex flex-col items-center flex-1 h-full justify-end"
+              >
+                <span className="text-[10px] font-medium text-gray-400 mb-1">
+                  {semana[dia.key] > 0 ? semana[dia.key] : ""}
+                </span>
+                <div className="w-full bg-blue-50 rounded-t-md relative flex items-end justify-center h-[80%]">
+                  <div
+                    className="w-full bg-blue-500 rounded-t-md transition-all duration-500"
+                    style={{ height: `${heightPercentage}%` }}
+                  ></div>
+                </div>
+                <span className="text-xs text-gray-500 mt-2 font-medium">
+                  {dia.label}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
