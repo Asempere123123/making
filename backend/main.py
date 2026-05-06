@@ -176,24 +176,34 @@ def get_datos():
 @app.post("/datos")
 def set_datos(req: DatosReq):
     global last_sensor_state
-
     conn = get_db()
+
+    current_data = conn.execute(
+        "SELECT dato1, dato2, dato3, dato4, dato5, dato6 FROM app_data WHERE id=1"
+    ).fetchone()
+
+    final_dato1 = req.dato1 if req.dato1 != 0.0 else current_data["dato1"]
+    final_dato2 = req.dato2 if req.dato2 != 0.0 else current_data["dato2"]
+    final_dato3 = req.dato3 if req.dato3 != 0.0 else current_data["dato3"]
+    final_dato4 = req.dato4 if req.dato4 != 0.0 else current_data["dato4"]
+    final_dato5 = req.dato5 if req.dato5 != 0.0 else current_data["dato5"]
+    final_dato6 = req.dato6 if req.dato6 != 0.0 else current_data["dato6"]
+
     conn.execute(
         """
         UPDATE app_data
         SET dato1=?, dato2=?, dato3=?, dato4=?, dato5=?, dato6=?
         WHERE id=1
         """,
-        (req.dato1, req.dato2, req.dato3, req.dato4, req.dato5, req.dato6),
+        (final_dato1, final_dato2, final_dato3, final_dato4, final_dato5, final_dato6),
     )
     conn.commit()
     conn.close()
 
-    current_condition = last_sensor_state  # Default to no change
-
-    if req.dato1 > BOUNDARY_DATO1:
+    current_condition = last_sensor_state
+    if final_dato1 > BOUNDARY_DATO1:
         current_condition = "none"
-    elif req.dato5 < BOUNDARY_DATO5_6 and req.dato6 < BOUNDARY_DATO5_6:
+    elif final_dato5 < BOUNDARY_DATO5_6 and final_dato6 < BOUNDARY_DATO5_6:
         current_condition = "pesado"
     else:
         current_condition = "ligero"
@@ -203,8 +213,9 @@ def set_datos(req: DatosReq):
             set_vehiculo(VehiculoReq(vehiculo=None))
         elif current_condition == "ligero":
             set_vehiculo(VehiculoReq(vehiculo="ligero"))
+        elif current_condition == "pesado":
+            set_vehiculo(VehiculoReq(vehiculo="pesado"))
 
-        # Update the lock to the new condition
         last_sensor_state = current_condition
 
     return {
