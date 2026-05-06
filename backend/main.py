@@ -17,8 +17,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-BOUNDARY_DATO1 = 100.0
-BOUNDARY_DATO5_6 = 200.0
+BOUNDARY_DATO1 = 200.0
+BOUNDARY_DATO5_6 = 500.0
 
 last_sensor_state: Optional[str] = None
 
