@@ -17,6 +17,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+BOUNDARY_DATO1 = 100.0
+BOUNDARY_DATO5_6 = 200.0
+
+last_sensor_state: Optional[str] = None
+
 
 def init_db():
     conn = sqlite3.connect(DB_NAME)
@@ -170,15 +175,39 @@ def get_datos():
 
 @app.post("/datos")
 def set_datos(req: DatosReq):
+    global last_sensor_state
+
     conn = get_db()
     conn.execute(
         """
         UPDATE app_data
         SET dato1=?, dato2=?, dato3=?, dato4=?, dato5=?, dato6=?
         WHERE id=1
-    """,
+        """,
         (req.dato1, req.dato2, req.dato3, req.dato4, req.dato5, req.dato6),
     )
     conn.commit()
     conn.close()
-    return {"mensaje": "Datos actualizados correctamente"}
+
+    current_condition = last_sensor_state  # Default to no change
+
+    if req.dato1 > BOUNDARY_DATO1:
+        current_condition = "none"
+    elif req.dato5 < BOUNDARY_DATO5_6 and req.dato6 < BOUNDARY_DATO5_6:
+        current_condition = "pesado"
+    else:
+        current_condition = "ligero"
+
+    if current_condition != last_sensor_state:
+        if current_condition == "none":
+            set_vehiculo(VehiculoReq(vehiculo=None))
+        elif current_condition == "ligero":
+            set_vehiculo(VehiculoReq(vehiculo="ligero"))
+
+        # Update the lock to the new condition
+        last_sensor_state = current_condition
+
+    return {
+        "mensaje": "Datos actualizados correctamente",
+        "estado_detectado": last_sensor_state,
+    }
