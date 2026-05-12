@@ -19,10 +19,9 @@ void setup() {
 
   sensor_distancia.begin(0x29);
   delay(150);
-  sensor_distancia.setMode(sensor_distancia.eSingle,sensor_distancia.eHigh);
+  sensor_distancia.setMode(sensor_distancia.eSingle,sensor_distancia.eLow);
 
-  // TODO: Calibrar
-  servo.attach(D8, 560, 2550);
+  servo.attach(D8, 350, 2250);
 
   Serial.begin(9600);
   Serial.println();
