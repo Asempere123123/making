@@ -14,12 +14,37 @@ DFRobot_VL53L0X sensor_distancia;
 Servo servo;
 WiFiClient client;
 
+float leerDistanciaEstable() {
+  float suma = 0;
+  int lecturasValidas = 0;
+
+  sensor_distancia.start();
+  delay(50);
+
+  for (int i = 0; i < 7; i++) {
+    float d = sensor_distancia.getDistance();
+
+    if (d > 0.0 && d < 2500.0) {
+      suma += d;
+      lecturasValidas++;
+    }
+    delay(40);
+  }
+  sensor_distancia.stop();
+
+  if (lecturasValidas > 0) {
+    return suma / lecturasValidas;
+  } else {
+    return 8190.0;
+  }
+}
+
 void setup() {
   Wire.begin();
 
   sensor_distancia.begin(0x29);
   delay(150);
-  sensor_distancia.setMode(sensor_distancia.eSingle,sensor_distancia.eLow);
+  sensor_distancia.setMode(sensor_distancia.eSingle, sensor_distancia.eHigh);
 
   servo.attach(D8, 350, 2250);
 
@@ -44,6 +69,8 @@ void setup() {
 }
 
 void loop() {
+  float distancia1 = leerDistanciaEstable();
+
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
 
@@ -77,14 +104,7 @@ void loop() {
     http.end();
   }
 
-  // SENSOR:
-  delay(150);
-  sensor_distancia.start();
-  delay(300);
-  float distancia1 = sensor_distancia.getDistance();
-  delay(150);
-  sensor_distancia.stop();
-
+  Serial.print("Distancia calculada: ");
   Serial.println(distancia1);
 
   Serial.println("");
