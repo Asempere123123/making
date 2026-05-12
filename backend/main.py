@@ -18,7 +18,7 @@ app.add_middleware(
 )
 
 BOUNDARY_DATO1 = 200.0
-BOUNDARY_DATO5_6 = 500.0
+BOUNDARY_DATO5_6 = 250.0
 
 last_sensor_state: Optional[str] = None
 
@@ -211,10 +211,13 @@ def set_datos(req: DatosReq):
     if current_condition != last_sensor_state:
         if current_condition == "none":
             set_vehiculo(VehiculoReq(vehiculo=None))
+            set_estado(EstadoReq(estado=1))
         elif current_condition == "ligero":
             set_vehiculo(VehiculoReq(vehiculo="ligero"))
+            set_estado(EstadoReq(estado=0))
         elif current_condition == "pesado":
             set_vehiculo(VehiculoReq(vehiculo="pesado"))
+            set_estado(EstadoReq(estado=2))
 
         last_sensor_state = current_condition
 
